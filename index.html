@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حروف الإنجليزي</title>
+<style>
+  :root{
+    --bg:#f5f3ff; --card:#ffffff; --ink:#1e1b4b; --muted:#6b7280;
+    --brand:#6d28d9; --accent:#f59e0b; --ok:#16a34a; --bad:#dc2626;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:linear-gradient(135deg,#6d28d9,#a855f7);color:#fff;text-align:center;padding:24px 16px 32px}
+  header h1{margin:0 0 6px;font-size:1.7rem}
+  header p{margin:0;opacity:.9;font-size:.95rem}
+  .tabs{display:flex;gap:8px;justify-content:center;margin:-18px 16px 16px}
+  .tabs button{border:0;padding:10px 20px;border-radius:999px;background:#fff;color:var(--brand);font-weight:700;font-size:1rem;box-shadow:0 2px 8px #0002;cursor:pointer}
+  .tabs button.active{background:var(--accent);color:#fff}
+  main{max-width:900px;margin:0 auto;padding:0 16px 40px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+  .card{background:var(--card);border-radius:18px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 8px #0001;border:2px solid transparent;transition:transform .15s,border-color .15s}
+  .card:hover,.card:active{transform:translateY(-3px);border-color:var(--brand)}
+  .card .emoji{font-size:2.4rem;line-height:1.2}
+  .card .letters{font-size:1.5rem;font-weight:800;color:var(--brand);direction:ltr}
+  .card .word{direction:ltr;font-weight:600}
+  .card .ar{color:var(--muted);font-size:.85rem}
+  /* detail dialog */
+  dialog{border:0;border-radius:24px;padding:0;max-width:380px;width:92%;box-shadow:0 10px 40px #0005}
+  dialog::backdrop{background:#0006}
+  .big{padding:24px;text-align:center}
+  .big .emoji{font-size:6rem;line-height:1.1}
+  .big .letters{font-size:3.4rem;font-weight:900;color:var(--brand);direction:ltr}
+  .big .word{font-size:2rem;font-weight:700;direction:ltr;margin:4px 0}
+  .big .ar{font-size:1.3rem;color:var(--muted);margin-bottom:6px}
+  .big .sentence{direction:ltr;background:#f5f3ff;border-radius:12px;padding:10px;margin:12px 0;font-size:1.05rem}
+  .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .btn{border:0;border-radius:12px;padding:10px 16px;font-size:1rem;font-weight:700;cursor:pointer;background:var(--brand);color:#fff}
+  .btn.alt{background:#e5e7eb;color:var(--ink)}
+  /* quiz */
+  .quiz{background:#fff;border-radius:20px;padding:20px;text-align:center;box-shadow:0 2px 8px #0001}
+  .quiz .q-emoji{font-size:5rem}
+  .quiz .q-ar{color:var(--muted);margin-bottom:12px}
+  .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+  .opts button{font-size:1.8rem;font-weight:800;padding:14px;border-radius:14px;border:2px solid #ddd;background:#fff;cursor:pointer;direction:ltr}
+  .opts button.ok{background:#dcfce7;border-color:var(--ok)}
+  .opts button.no{background:#fee2e2;border-color:var(--bad)}
+  .score{margin-top:12px;font-weight:700;color:var(--brand)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔤 تعلّم حروف الإنجليزي</h1>
+  <p>اضغط على أي حرف علشان تشوف الكلمة وتسمع نطقها</p>
+</header>
+
+<div class="tabs">
+  <button id="tabLearn" class="active">📚 تعلّم</button>
+  <button id="tabQuiz">🎮 اختبار</button>
+</div>
+
+<main>
+  <section id="learn"><div class="grid" id="grid"></div></section>
+  <section id="quizSec" class="hidden">
+    <div class="quiz">
+      <div class="q-emoji" id="qEmoji"></div>
+      <div class="q-ar" id="qAr"></div>
+      <div>الكلمة دي بتبدأ بأنهي حرف؟</div>
+      <div class="opts" id="opts"></div>
+      <div class="score" id="score">النتيجة: 0 / 0</div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn alt" id="speakQ">🔊 اسمع الكلمة</button>
+        <button class="btn" id="nextQ">السؤال التالي ➜</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <div class="big">
+    <div class="emoji" id="dEmoji"></div>
+    <div class="letters" id="dLetters"></div>
+    <div class="word" id="dWord"></div>
+    <div class="ar" id="dAr"></div>
+    <div class="sentence" id="dSentence"></div>
+    <div class="row">
+      <button class="btn" id="dSpeak">🔊 اسمع</button>
+      <button class="btn alt" id="dPrev">➜ السابق</button>
+      <button class="btn alt" id="dNext">التالي ⬅</button>
+      <button class="btn alt" id="dClose">إغلاق</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const DATA = [
+  ["A","Apple","تفاحة","🍎","I eat an apple."],
+  ["B","Ball","كرة","⚽","I kick the ball."],
+  ["C","Cat","قطة","🐱","The cat is sleeping."],
+  ["D","Dog","كلب","🐶","The dog is happy."],
+  ["E","Elephant","فيل","🐘","The elephant is big."],
+  ["F","Fish","سمكة","🐟","The fish swims."],
+  ["G","Grapes","عنب","🍇","I like grapes."],
+  ["H","House","بيت","🏠","This is my house."],
+  ["I","Ice cream","آيس كريم","🍦","I love ice cream."],
+  ["J","Juice","عصير","🧃","I drink juice."],
+  ["K","Kite","طائرة ورقية","🪁","The kite is high."],
+  ["L","Lion","أسد","🦁","The lion is strong."],
+  ["M","Moon","قمر","🌙","The moon is bright."],
+  ["N","Nose","أنف","👃","I smell with my nose."],
+  ["O","Orange","برتقالة","🍊","The orange is sweet."],
+  ["P","Pizza","بيتزا","🍕","We eat pizza."],
+  ["Q","Queen","ملكة","👑","The queen is kind."],
+  ["R","Rabbit","أرنب","🐰","The rabbit jumps."],
+  ["S","Sun","شمس","☀️","The sun is hot."],
+  ["T","Tree","شجرة","🌳","The tree is green."],
+  ["U","Umbrella","شمسية","☂️","I use an umbrella."],
+  ["V","Violin","كمان","🎻","He plays the violin."],
+  ["W","Watermelon","بطيخ","🍉","Watermelon is juicy."],
+  ["X","Xylophone","إكسيليفون","🎶","I play the xylophone."],
+  ["Y","Yacht","يخت","⛵","The yacht is on the sea."],
+  ["Z","Zebra","حمار وحشي","🦓","The zebra has stripes."]
+];
+
+const $ = id => document.getElementById(id);
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = .85;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* Grid */
+const grid = $("grid");
+DATA.forEach((d,i)=>{
+  const c = document.createElement("div");
+  c.className = "card";
+  c.innerHTML = `<div class="emoji">${d[3]}</div>
+    <div class="letters">${d[0]}${d[0].toLowerCase()}</div>
+    <div class="word">${d[1]}</div><div class="ar">${d[2]}</div>`;
+  c.onclick = () => openDetail(i);
+  grid.appendChild(c);
+});
+
+/* Detail dialog */
+let cur = 0;
+function openDetail(i){
+  cur = (i + DATA.length) % DATA.length;
+  const d = DATA[cur];
+  $("dEmoji").textContent = d[3];
+  $("dLetters").textContent = d[0] + " " + d[0].toLowerCase();
+  $("dWord").textContent = d[1];
+  $("dAr").textContent = d[2];
+  $("dSentence").textContent = d[4];
+  if(!$("dlg").open) $("dlg").showModal();
+  speak(`${d[0]}. ${d[1]}`);
+}
+$("dSpeak").onclick = () => speak(`${DATA[cur][0]}. ${DATA[cur][1]}. ${DATA[cur][4]}`);
+$("dNext").onclick = () => openDetail(cur+1);
+$("dPrev").onclick = () => openDetail(cur-1);
+$("dClose").onclick = () => $("dlg").close();
+
+/* Tabs */
+function showTab(q){
+  $("learn").classList.toggle("hidden", q);
+  $("quizSec").classList.toggle("hidden", !q);
+  $("tabLearn").classList.toggle("active", !q);
+  $("tabQuiz").classList.toggle("active", q);
+  if(q) newQuestion();
+}
+$("tabLearn").onclick = () => showTab(false);
+$("tabQuiz").onclick = () => showTab(true);
+
+/* Quiz */
+let ans, right = 0, total = 0, locked = false;
+function newQuestion(){
+  locked = false;
+  ans = DATA[Math.floor(Math.random()*DATA.length)];
+  $("qEmoji").textContent = ans[3];
+  $("qAr").textContent = `${ans[1]} — ${ans[2]}`;
+  const set = new Set([ans[0]]);
+  while(set.size < 4) set.add(DATA[Math.floor(Math.random()*DATA.length)][0]);
+  const opts = [...set].sort(() => Math.random() - .5);
+  $("opts").innerHTML = "";
+  opts.forEach(l => {
+    const b = document.createElement("button");
+    b.textContent = l;
+    b.onclick = () => {
+      if(locked) return;
+      locked = true; total++;
+      if(l === ans[0]){ right++; b.classList.add("ok"); speak("Great job!"); }
+      else{
+        b.classList.add("no");
+        [...$("opts").children].find(x => x.textContent === ans[0]).classList.add("ok");
+      }
+      $("score").textContent = `النتيجة: ${right} / ${total}`;
+    };
+    $("opts").appendChild(b);
+  });
+}
+$("nextQ").onclick = newQuestion;
+$("speakQ").onclick = () => speak(ans[1]);
+</script>
+</body>
+</html>
